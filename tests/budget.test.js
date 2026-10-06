@@ -93,3 +93,21 @@ test('total view uses the full amount paid', () => {
   const o = overview(rent, cats, period, '2026-10-06', 'total');
   assert.equal(o.projected, 749458);
 });
+
+import { periodMonths, monthlyByCategory, cumulative } from '../js/budget.js';
+
+test('chart data: months, per-category monthly totals and cumulative line', () => {
+  const months = periodMonths(period);
+  assert.deepEqual(months, ['2026-10', '2026-11', '2026-12', '2027-01']);
+  const coffee = tx({ id: 'c', date: '2026-11-03', amount: 420, categoryId: 'coffee' });
+  const byCat = monthlyByCategory([...rent, coffee], months, period);
+  assert.equal(byCat.rent.reduce((a, b) => a + b, 0), 399458);
+  assert.deepEqual(byCat.coffee, [0, 420, 0, 0]);
+
+  const cum = cumulative([...rent, coffee], cats, period, '2026-11-30');
+  assert.equal(cum.days.length, 117);
+  assert.equal(cum.actual.at(-1), null, 'future days have no actual value');
+  const lastKnown = cum.actual.filter((v) => v != null).at(-1);
+  assert.equal(lastKnown, byCat.rent[0] + byCat.rent[1] + 420);
+  assert.equal(cum.plan.at(-1), 399458 + Math.round(30000 * 25 / 31) + Math.round(6000 * 25 / 31) + 36000 * 3);
+});

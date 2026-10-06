@@ -159,3 +159,71 @@ export function overview(txs, categories, period, today, view = 'mine') {
     months,
   };
 }
+
+// ---- Chart data -------------------------------------------------------------
+
+/** All months touched by the exchange period, e.g. ['2026-10', …, '2027-01']. */
+export function periodMonths(period) {
+  const out = [];
+  for (let d = dayNum(period.start); d <= dayNum(period.end); d = monthEnd(isoOf(d).slice(0, 7)) + 1) out.push(isoOf(d).slice(0, 7));
+  return out;
+}
+
+/** { categoryId|'none': [cents per month] } — spending inside the period only. */
+export function monthlyByCategory(txs, months, period, view = 'mine') {
+  const out = {};
+  const lo0 = dayNum(period.start), hi0 = dayNum(period.end);
+  for (const t of spending(txs)) {
+    const k = t.categoryId ?? 'none';
+    months.forEach((m, i) => {
+      const lo = Math.max(monthStart(m), lo0), hi = Math.min(monthEnd(m), hi0);
+      const c = amountBetween(t, lo, hi, view);
+      if (c) (out[k] ??= months.map(() => 0))[i] += c;
+    });
+  }
+  return out;
+}
+
+/**
+ * Day-by-day cumulative spending and plan over the whole period.
+ * Returns { days: [iso], actual: [cents|null] (null after today), plan: [cents] }.
+ */
+export function cumulative(txs, categories, period, today, view = 'mine') {
+  const lo = dayNum(period.start), hi = dayNum(period.end), todayD = dayNum(today);
+  const n = hi - lo + 1;
+  const daily = new Array(n).fill(0);
+  for (const t of spending(txs)) {
+    for (const p of portions(t, view)) {
+      const len = p.to - p.from + 1;
+      // Spread portions evenly per day; cumulative rounding keeps totals exact.
+      let given = 0;
+      for (let d = p.from, k = 1; d <= p.to; d++, k++) {
+        const upTo = Math.round((p.cents * k) / len);
+        if (d >= lo && d <= hi) daily[d - lo] += upTo - given;
+        given = upTo;
+      }
+    }
+  }
+  const active = categories.filter((c) => !c.archived);
+  const planDaily = new Array(n).fill(0);
+  for (const m of periodMonths(period)) {
+    const mLo = Math.max(monthStart(m), lo), mHi = Math.min(monthEnd(m), hi);
+    const monthPlan = active.reduce((s, c) => s + effectiveBudget(c, m, period, txs, view).cents, 0);
+    const len = mHi - mLo + 1;
+    let given = 0;
+    for (let d = mLo, k = 1; d <= mHi; d++, k++) {
+      const upTo = Math.round((monthPlan * k) / len);
+      planDaily[d - lo] += upTo - given;
+      given = upTo;
+    }
+  }
+  const days = [], actual = [], plan = [];
+  let a = 0, p = 0;
+  for (let i = 0; i < n; i++) {
+    a += daily[i]; p += planDaily[i];
+    days.push(isoOf(lo + i));
+    actual.push(lo + i <= todayD ? a : null);
+    plan.push(p);
+  }
+  return { days, actual, plan };
+}

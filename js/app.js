@@ -6,7 +6,7 @@ import { ensureSeeded } from './seed.js';
 import { openTransactionForm } from './views/tx-form.js';
 import { listTransactions, inInbox } from './transactions.js';
 
-export const APP_VERSION = '0.6.0';
+export const APP_VERSION = '0.7.0';
 
 // Hash routes keep deep links (e.g. #/transactions?cat=x&month=2026-11)
 // working on GitHub Pages without any server configuration.
@@ -63,11 +63,14 @@ async function openQuickAdd() {
 }
 
 let renderToken = 0;
+let currentView = null;
 async function render({ focus = true } = {}) {
   const { name, params } = parseHash();
   const token = ++renderToken;
   const view = await ROUTES[name].load();
   if (token !== renderToken) return;           // a newer navigation won the race
+  if (currentView !== view) currentView?.cleanup?.();
+  currentView = view;
 
   const main = document.getElementById('main');
   document.body.classList.remove('is-selecting');

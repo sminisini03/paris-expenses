@@ -1,7 +1,7 @@
 // Service worker: cache-first for the app shell so it works fully offline.
 // Bump VERSION on every deploy; the app then shows "A new version is ready".
 
-const VERSION = 'v0.6.0';
+const VERSION = 'v0.7.0';
 const CACHE = `paris-expenses-${VERSION}`;
 // On localhost, prefer the network so edits show up on reload.
 const DEV = ['localhost', '127.0.0.1'].includes(location.hostname);
@@ -25,6 +25,7 @@ const SHELL = [
   'js/import.js',
   'js/balance.js',
   'js/budget.js',
+  'js/charts.js',
   'js/format.js',
   'js/settings.js',
   'js/ui.js',
@@ -40,13 +41,16 @@ const SHELL = [
   'js/views/inbox-view.js',
   'js/views/balance-view.js',
   'vendor/inter-latin-wght-normal.woff2',
+  'vendor/chart.umd.min.js',
   'assets/icons/icon-192.png',
   'assets/icons/icon-512.png',
   'assets/icons/apple-touch-icon.png',
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
+  // cache: 'reload' bypasses the browser's HTTP cache, so a new version never
+  // installs stale copies (GitHub Pages lets files be cached for 10 minutes).
+  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL.map((url) => new Request(url, { cache: 'reload' })))));
 });
 
 self.addEventListener('activate', (event) => {
@@ -68,13 +72,13 @@ self.addEventListener('fetch', (event) => {
     const cache = await caches.open(CACHE);
     // Navigations always resolve to the shell (routing is hash-based).
     if (request.mode === 'navigate') {
-      if (DEV) return fetch(request).catch(() => cache.match('index.html'));
+      if (DEV) return fetch(request.url, { cache: 'no-cache' }).catch(() => cache.match('index.html'));
       return (await cache.match('index.html')) ?? fetch(request);
     }
     const cached = await cache.match(request, { ignoreSearch: true });
     if (cached && !DEV) return cached;
     try {
-      const response = await fetch(request);
+      const response = await fetch(request, DEV ? { cache: 'no-cache' } : undefined);
       if (response.ok) cache.put(request, response.clone());
       return response;
     } catch (err) {

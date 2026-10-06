@@ -40,18 +40,21 @@
   --positive-soft:color-mix(in oklab, var(--positive) 12%, transparent);
 
   /* ---- Category palette (defaults offered when creating a category) ----
-     Every colour has ≥ 3:1 contrast against --surface in both themes.
-     No pure red/green, so those keep their over/under-budget meaning. */
-  --cat-1:  #7B61D9;  /* violet  */
-  --cat-2:  #0E9384;  /* teal    */
-  --cat-3:  #E0631A;  /* orange  */
-  --cat-4:  #A8742F;  /* brown   */
-  --cat-5:  #1D8CC4;  /* sky     */
-  --cat-6:  #B54BC8;  /* purple  */
-  --cat-7:  #D9467A;  /* pink    */
-  --cat-8:  #B58A00;  /* gold    */
-  --cat-9:  #5C7ED6;  /* periwinkle */
-  --cat-10: #6E7A8A;  /* slate   */
+     Validated with the dataviz palette checker in BOTH themes (surfaces
+     #FFFFFF / #18181B) in this order: adjacent colour-blind ΔE ≥ 11, normal
+     vision ΔE ≥ 16, chroma ≥ 0.10, ≥ 3:1 contrast. No reds or greens, so
+     those keep their over/under-budget meaning. Order matters: it is the
+     stacking order of the default categories. */
+  --cat-1:   #B964DD;  /* orchid */
+  --cat-2:   #1AA598;  /* teal */
+  --cat-3:   #A29015;  /* mustard */
+  --cat-4:   #A74F21;  /* brown */
+  --cat-5:   #5096CE;  /* blue */
+  --cat-6:   #8A48B3;  /* purple */
+  --cat-7:   #E25295;  /* pink */
+  --cat-8:   #7B6C01;  /* olive */
+  --cat-9:   #0975A2;  /* deep cyan */
+  --cat-10:  #7C7BFF;  /* periwinkle */
 
   /* ---- Typography -------------------------------------------------------- */
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
