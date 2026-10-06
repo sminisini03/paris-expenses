@@ -1,0 +1,16 @@
+# Never commit personal data
+.env
+*.csv
+!tests/fixtures/*.csv
+*.xlsx
+backup*.json
+paris-expenses-backup*.json
+
+.DS_Store
+node_modules/
+
+# Personal starter data (import via Settings → Restore)
+private/
+
+# Local editor/preview config
+.claude/
