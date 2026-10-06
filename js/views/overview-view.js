@@ -1,7 +1,7 @@
 // Overview: this month vs budget, the whole exchange vs plan, top categories,
 // balances. All amounts follow the "My share / Total" switch.
 
-import { h, icon, pageHeader, emptyState, segmented } from '../ui.js';
+import { h, icon, pageHeader, emptyState, segmented, toast } from '../ui.js';
 import { settings, setSetting } from '../settings.js';
 import { date, money, month as monthName, todayIso } from '../format.js';
 import { listTransactions, inInbox } from '../transactions.js';
@@ -10,6 +10,7 @@ import { listPeople, ME } from '../people.js';
 import { allBalances } from '../balance.js';
 import { overview, dayNum } from '../budget.js';
 import { balanceText } from './balance-view.js';
+import { lastBackupAt, downloadBackup } from '../export.js';
 
 function periodStatus({ periodStart, periodEnd }, today) {
   const total = dayNum(periodEnd) - dayNum(periodStart) + 1;
@@ -34,6 +35,32 @@ function statRow(label, value, tone) {
   return h('div', { class: 'stat-row' }, h('dt', { class: 'muted' }, label), h('dd', { class: `amount${tone ? ` tone-${tone}` : ''}` }, value));
 }
 
+const SNOOZE_KEY = 'pe.backupSnoozedUntil';
+const BACKUP_EVERY_DAYS = 7;
+
+/** "Back up" reminder: iOS can clear a web app's storage, and a backup is the only copy. */
+async function backupBanner(txCount) {
+  if (!txCount) return null;
+  const last = await lastBackupAt();
+  const ageDays = last ? Math.floor((Date.now() - Date.parse(last)) / 86_400_000) : Infinity;
+  if (ageDays < BACKUP_EVERY_DAYS) return null;
+  try { if (Number(localStorage.getItem(SNOOZE_KEY)) > Date.now()) return null; } catch { /* storage blocked: just show it */ }
+  const el = h('section', { class: 'banner', role: 'region', 'aria-label': 'Backup reminder' },
+    h('p', { class: 'small' }, h('strong', {}, last ? `Last backup ${ageDays} days ago.` : 'No backup yet.'),
+      ' iOS can clear app data, and nothing is stored anywhere else. Save a backup to Files.'),
+    h('div', { class: 'banner__actions' },
+      h('button', { class: 'btn btn--ghost', type: 'button', onclick: () => {
+        try { localStorage.setItem(SNOOZE_KEY, String(Date.now() + 86_400_000)); } catch { /* ignore */ }
+        el.remove();
+      } }, 'Later'),
+      h('button', { class: 'btn btn--primary', type: 'button', 'data-key': 'banner-backup', onclick: async () => {
+        if (await downloadBackup()) { toast('Backup saved.'); el.remove(); }
+      } }, 'Back up now'),
+    ),
+  );
+  return el;
+}
+
 export async function render(main) {
   const s = settings();
   const today = todayIso();
@@ -43,6 +70,7 @@ export async function render(main) {
   const balances = allBalances(txs);
   const others = people.filter((p) => p.id !== ME && balances[p.id]);
   const inboxCount = txs.filter(inInbox).length;
+  const banner = await backupBanner(txs.length);
   const mName = monthName(o.month);
   const endLabel = date(s.periodEnd).replace(/ \d{4}$/, '');
   // Budgets are for your share; in the Total view they would compare apples with oranges.
@@ -105,6 +133,7 @@ export async function render(main) {
   main.append(
     pageHeader('Overview', `${date(s.periodStart)} – ${date(s.periodEnd)} · ${periodStatus(s, today)}`,
       segmented('amount-view', 'Amounts shown', [['mine', 'My share'], ['total', 'Total']], view, (v) => setSetting('amountView', v))),
+    ...(banner ? [banner] : []),
     ...(inboxCount ? [h('a', { class: 'chip', href: '#/inbox' }, icon('inbox'), `${inboxCount} to categorise`)] : []),
     h('div', { class: 'grid-2' }, monthCard, exchangeCard),
     ...(topCard ? [h('div', { style: { marginTop: 'var(--s-2)' } }, topCard)] : []),

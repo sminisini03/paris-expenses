@@ -4,7 +4,8 @@ import { listCategories } from '../categories.js';
 import { listRules } from '../rules.js';
 import { listPeople } from '../people.js';
 import { NUMBER_FORMATS, moneyExample, date as fmtDate } from '../format.js';
-import { downloadBackup, lastBackupAt, inspectBackup, restoreBackup } from '../export.js';
+import { downloadBackup, lastBackupAt, inspectBackup, restoreBackup, downloadXlsx } from '../export.js';
+import { listTransactions } from '../transactions.js';
 import { APP_VERSION } from '../app.js';
 import { pickAndImport } from './import-flow.js';
 
@@ -46,7 +47,23 @@ async function backupRows() {
     });
   });
 
+  const excelBtn = h('button', { class: 'btn', type: 'button', 'data-key': 'export-xlsx', onclick: async () => {
+    excelBtn.disabled = true;
+    try {
+      const [txs, categories, people] = await Promise.all([listTransactions(), listCategories({ includeArchived: true }), listPeople()]);
+      const s = settings();
+      if (await downloadXlsx({ txs, categories, people, period: { start: s.periodStart, end: s.periodEnd } })) toast('Excel file saved.');
+    } catch (err) { toast(err.message); } finally { excelBtn.disabled = false; }
+  } }, 'Export .xlsx');
+
   return [
+    h('li', { class: 'row' },
+      h('div', { class: 'row__main' },
+        h('div', { class: 'row__title' }, 'Excel export'),
+        h('div', { class: 'row__hint' }, 'Summary per month and category (Total / per person / you) plus every transaction.'),
+      ),
+      excelBtn,
+    ),
     h('li', { class: 'row' },
       h('div', { class: 'row__main' },
         h('div', { class: 'row__title' }, 'Backup'),

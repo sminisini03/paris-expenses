@@ -1,7 +1,7 @@
 // Service worker: cache-first for the app shell so it works fully offline.
 // Bump VERSION on every deploy; the app then shows "A new version is ready".
 
-const VERSION = 'v0.7.0';
+const VERSION = 'v0.8.0';
 const CACHE = `paris-expenses-${VERSION}`;
 // On localhost, prefer the network so edits show up on reload.
 const DEV = ['localhost', '127.0.0.1'].includes(location.hostname);
@@ -42,6 +42,7 @@ const SHELL = [
   'js/views/balance-view.js',
   'vendor/inter-latin-wght-normal.woff2',
   'vendor/chart.umd.min.js',
+  'vendor/xlsx.mini.min.js',
   'assets/icons/icon-192.png',
   'assets/icons/icon-512.png',
   'assets/icons/apple-touch-icon.png',

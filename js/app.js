@@ -6,7 +6,7 @@ import { ensureSeeded } from './seed.js';
 import { openTransactionForm } from './views/tx-form.js';
 import { listTransactions, inInbox } from './transactions.js';
 
-export const APP_VERSION = '0.7.0';
+export const APP_VERSION = '0.8.0';
 
 // Hash routes keep deep links (e.g. #/transactions?cat=x&month=2026-11)
 // working on GitHub Pages without any server configuration.
@@ -96,6 +96,14 @@ async function render({ focus = true } = {}) {
   if (focus) main.querySelector('.page-title')?.focus({ preventScroll: true });
 }
 
+/** Ask once data exists; installed (home-screen) apps are usually granted. */
+async function requestPersistentStorage() {
+  try {
+    if (!navigator.storage?.persist || await navigator.storage.persisted()) return;
+    if ((await listTransactions()).length) await navigator.storage.persist();
+  } catch { /* not supported: the backup reminder covers it */ }
+}
+
 async function updateBadges() {
   const inbox = (await listTransactions()).filter(inInbox).length;
   const badge = document.querySelector('[data-badge="transactions"]');
@@ -139,6 +147,7 @@ async function boot() {
   window.addEventListener('datachange', () => render({ focus: false }));
   await render({ focus: false });
   registerServiceWorker();
+  requestPersistentStorage();
 }
 
 boot().catch((err) => {
