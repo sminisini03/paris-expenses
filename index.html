@@ -16,15 +16,18 @@
   <link rel="icon" type="image/png" href="assets/icons/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
   <link rel="preload" href="vendor/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/tokens.css">
-  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/tokens.css?v=1.0.0">
+  <link rel="stylesheet" href="css/app.css?v=1.0.0">
   <script>
     // Apply saved theme + accent before first paint (mirrored by settings.js).
     try {
       var t = JSON.parse(localStorage.getItem('pe.theme') || 'null');
       if (t) {
         if (t.theme && t.theme !== 'system') document.documentElement.dataset.theme = t.theme;
-        if (t.accent) document.documentElement.style.setProperty('--accent', t.accent);
+        var st = document.documentElement.style;
+        if (t.accent) st.setProperty('--accent', t.accent);
+        if (t.textLight) st.setProperty('--accent-text-light', t.textLight);
+        if (t.textDark) st.setProperty('--accent-text-dark', t.textDark);
       }
     } catch (e) {}
   </script>

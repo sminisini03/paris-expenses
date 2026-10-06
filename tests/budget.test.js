@@ -13,8 +13,8 @@ const cats = [
 ];
 const tx = (f) => ({ kind: 'expense', spread: null, ...f, ...computeSplit({ amount: f.amount, mode: f.mode ?? 'mine', counterpartId: 'partner', customShare: f.customShare }) });
 
-const rentAmounts = [203848, 197559, 200986, 147065];
-const shares = proportional(rentAmounts, 399458);
+const rentAmounts = [180000, 175000, 170000, 125000];
+const shares = proportional(rentAmounts, 350000);
 const rent = rentAmounts.map((amount, i) => tx({
   id: `r${i}`, date: ['2026-10-03', '2026-10-28', '2026-11-27', '2026-12-28'][i], amount, categoryId: 'rent',
   mode: 'custom', customShare: shares[i], spread: { from: period.start, to: period.end },
@@ -37,8 +37,8 @@ test('spread cost is divided by days and adds up exactly', () => {
 test('all rent instalments together are a flat cost per day', () => {
   const totals = monthCategoryTotals(rent);
   const sum = Object.values(totals).reduce((s, m) => s + m.rent, 0);
-  assert.equal(sum, 399458);
-  assert.ok(Math.abs(totals['2026-11'].rent - Math.round((399458 * 30) / 117)) <= 4);
+  assert.equal(sum, 350000);
+  assert.ok(Math.abs(totals['2026-11'].rent - Math.round((350000 * 30) / 117)) <= 4);
 });
 
 test('amountBetween takes the share of a spread inside a window', () => {
@@ -76,8 +76,8 @@ test('overview: projection = committed costs + average daily variable spend × d
   const o = overview(txs, cats, period, '2026-10-08');            // 2 days elapsed
   assert.equal(o.avgDailyVariable, 500);
   assert.equal(o.remaining, dayNum('2027-01-31') - dayNum('2026-10-08'));
-  assert.equal(o.projected, 399458 + 1000 + 500 * o.remaining);
-  assert.equal(o.plan, 399458 + Math.round(30000 * 25 / 31) + Math.round(6000 * 25 / 31) + 36000 * 3);   // rent at cost; rounded per category
+  assert.equal(o.projected, 350000 + 1000 + 500 * o.remaining);
+  assert.equal(o.plan, 350000 + Math.round(30000 * 25 / 31) + Math.round(6000 * 25 / 31) + 36000 * 3);   // rent at cost; rounded per category
   assert.equal(o.gap, o.projected - o.plan);
 });
 
@@ -85,13 +85,13 @@ test('overview before the exchange starts', () => {
   const o = overview(rent, cats, period, '2026-10-06');
   assert.equal(o.started, false);
   assert.equal(o.spentToDate, 0);
-  assert.equal(o.projected, 399458);
+  assert.equal(o.projected, 350000);
   assert.equal(o.daysLeft, 25);
 });
 
 test('total view uses the full amount paid', () => {
   const o = overview(rent, cats, period, '2026-10-06', 'total');
-  assert.equal(o.projected, 749458);
+  assert.equal(o.projected, 650000);
 });
 
 import { periodMonths, monthlyByCategory, cumulative } from '../js/budget.js';
@@ -101,7 +101,7 @@ test('chart data: months, per-category monthly totals and cumulative line', () =
   assert.deepEqual(months, ['2026-10', '2026-11', '2026-12', '2027-01']);
   const coffee = tx({ id: 'c', date: '2026-11-03', amount: 420, categoryId: 'coffee' });
   const byCat = monthlyByCategory([...rent, coffee], months, period);
-  assert.equal(byCat.rent.reduce((a, b) => a + b, 0), 399458);
+  assert.equal(byCat.rent.reduce((a, b) => a + b, 0), 350000);
   assert.deepEqual(byCat.coffee, [0, 420, 0, 0]);
 
   const cum = cumulative([...rent, coffee], cats, period, '2026-11-30');
@@ -109,5 +109,5 @@ test('chart data: months, per-category monthly totals and cumulative line', () =
   assert.equal(cum.actual.at(-1), null, 'future days have no actual value');
   const lastKnown = cum.actual.filter((v) => v != null).at(-1);
   assert.equal(lastKnown, byCat.rent[0] + byCat.rent[1] + 420);
-  assert.equal(cum.plan.at(-1), 399458 + Math.round(30000 * 25 / 31) + Math.round(6000 * 25 / 31) + 36000 * 3);
+  assert.equal(cum.plan.at(-1), 350000 + Math.round(30000 * 25 / 31) + Math.round(6000 * 25 / 31) + 36000 * 3);
 });

@@ -32,12 +32,12 @@ test('refund of a shared purchase reverses what partner owed', () => {
 });
 
 test('rent: custom share split across instalments adds up exactly', () => {
-  const instalments = [203848, 197559, 200986, 147065];
+  const instalments = [180000, 175000, 170000, 125000];
   const total = instalments.reduce((a, b) => a + b, 0);
-  assert.equal(total, 749458);
-  const shares = proportional(instalments, 749458 - 350000);
-  assert.equal(shares.reduce((a, b) => a + b, 0), 399458);
+  assert.equal(total, 650000);
+  const shares = proportional(instalments, 650000 - 300000);
+  assert.equal(shares.reduce((a, b) => a + b, 0), 350000);
   const owed = instalments.reduce((s, a, i) => s + owedToMe(tx({ amount: a, mode: 'custom', customShare: shares[i] })), 0);
-  assert.equal(owed, 350000);
-  assert.equal(sharePct({ amount: instalments[0], myShare: shares[0] }), 53.3);
+  assert.equal(owed, 300000);
+  assert.equal(sharePct({ amount: instalments[0], myShare: shares[0] }), 53.8);
 });

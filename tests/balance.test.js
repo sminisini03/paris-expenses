@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { balanceWith, settlementFields } from '../js/balance.js';
 import { computeSplit, proportional } from '../js/split.js';
 
-const rentAmounts = [203848, 197559, 200986, 147065];
+const rentAmounts = [180000, 175000, 170000, 125000];
 const rentDates = ['2026-10-03', '2026-10-28', '2026-11-27', '2026-12-28'];
-const shares = proportional(rentAmounts, 749458 - 350000);
+const shares = proportional(rentAmounts, 650000 - 300000);
 const rent = rentAmounts.map((amount, i) => ({
   id: `r${i}`, date: rentDates[i], amount,
   ...computeSplit({ amount, mode: 'custom', customShare: shares[i], counterpartId: 'partner' }),
@@ -15,8 +15,8 @@ const groceries = { id: 'g', date: '2026-10-11', amount: 3000, ...computeSplit({
 
 test('only rent already paid counts; the rest is upcoming', () => {
   const b = balanceWith(rent, 'partner', '2026-10-06');
-  assert.equal(b.now, 95198);
-  assert.equal(b.now + b.upcoming, 350000);
+  assert.equal(b.now, rentAmounts[0] - shares[0]);
+  assert.equal(b.now + b.upcoming, 300000);
 });
 
 test('debts in both directions net out', () => {

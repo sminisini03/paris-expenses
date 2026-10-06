@@ -19,7 +19,10 @@
   /* ---- Accent (overridden at runtime from Settings) -------------------- */
   --accent: #2F5BEA;
   --accent-contrast: #FFFFFF;                     /* text on accent fills; set by JS */
-  --accent-text: light-dark(var(--accent), color-mix(in oklab, var(--accent) 55%, white));
+  /* Accent as text: computed per accent in settings.js to stay ≥ 4.5:1 (these are the defaults for #2F5BEA). */
+  --accent-text-light: #2D57E1;
+  --accent-text-dark: #6586EF;
+  --accent-text: light-dark(var(--accent-text-light), var(--accent-text-dark));
   --accent-soft: color-mix(in oklab, var(--accent) 12%, transparent);
 
   /* ---- Neutrals ---------------------------------------------------------- */

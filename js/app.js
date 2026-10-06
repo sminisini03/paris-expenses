@@ -6,7 +6,7 @@ import { ensureSeeded } from './seed.js';
 import { openTransactionForm } from './views/tx-form.js';
 import { listTransactions, inInbox } from './transactions.js';
 
-export const APP_VERSION = '0.8.0';
+export const APP_VERSION = '1.0.0';
 
 // Hash routes keep deep links (e.g. #/transactions?cat=x&month=2026-11)
 // working on GitHub Pages without any server configuration.
@@ -39,16 +39,21 @@ function buildNav() {
       Object.entries(ROUTES).filter(([, r]) => r.nav !== false).map(([name, r]) => h('li', {},
         h('a', { class: 'nav__link', href: `#/${name}`, 'data-route': name },
           icon(r.icon), h('span', {}, r.title),
-          h('span', { class: 'nav__badge', 'data-badge': name }),
+          h('span', { class: 'nav__badge', 'data-badge': name, 'aria-hidden': 'true' }),
+          h('span', { class: 'visually-hidden', 'data-badge-label': name }),
         ),
       )),
     ),
   );
   const fab = h('button', { class: 'fab', type: 'button', 'aria-label': 'Add expense', onclick: openQuickAdd }, icon('plus'));
-  document.querySelector('.shell').append(nav, fab);
+  // Navigation first in the DOM (matches the visual order on desktop; the skip link jumps over it).
+  const shell = document.querySelector('.shell');
+  shell.prepend(nav);
+  shell.append(fab);
 }
 
 async function openQuickAdd() {
+  const opener = document.activeElement;
   // iOS only opens the keyboard for focus that happens inside the tap. Focus a
   // hidden input now; the dialog's autofocus field then takes over focus and
   // the keyboard stays up even though the form opens a moment later.
@@ -56,7 +61,9 @@ async function openQuickAdd() {
   document.body.append(proxy);
   proxy.focus();
   try {
-    await openTransactionForm();
+    const dlg = await openTransactionForm();
+    // The browser would return focus to the (removed) proxy; send it back to the + button.
+    dlg?.dialog.addEventListener('close', () => { if (opener?.isConnected) opener.focus(); });
   } finally {
     proxy.remove();
   }
@@ -107,10 +114,9 @@ async function requestPersistentStorage() {
 async function updateBadges() {
   const inbox = (await listTransactions()).filter(inInbox).length;
   const badge = document.querySelector('[data-badge="transactions"]');
-  if (badge) {
-    badge.textContent = inbox ? String(inbox) : '';
-    badge.setAttribute('aria-label', inbox ? `${inbox} to categorise` : '');
-  }
+  const label = document.querySelector('[data-badge-label="transactions"]');
+  if (badge) badge.textContent = inbox ? String(inbox) : '';
+  if (label) label.textContent = inbox ? `, ${inbox} to categorise` : '';
 }
 
 function registerServiceWorker() {

@@ -11,7 +11,7 @@ const rules = [
   { id: 'r4', keyword: 'ZARA', categoryId: 'shopping', split: null },
   { id: 'r5', keyword: 'PRET A MANGER', categoryId: 'eating', split: null },
 ];
-const plannedRent = { id: 'plan-rent-1', source: 'plan', fingerprint: null, date: '2026-10-03', amount: 203848, description: 'Airbnb rent · instalment 1/4' };
+const plannedRent = { id: 'plan-rent-1', source: 'plan', fingerprint: null, date: '2026-10-03', amount: 180000, description: 'Airbnb rent · instalment 1/4' };
 let n = 0;
 const opts = {
   periodStart: '2026-10-07', periodEnd: '2027-01-31', currency: 'EUR',
@@ -37,7 +37,7 @@ test('summary counts', () => {
 });
 
 test('exclusions carry a reason', () => {
-  assert.equal(reasons['WINDTRE'], 'Outside the exchange period');
+  assert.equal(reasons['TELCO MOBILE'], 'Outside the exchange period');
   assert.equal(reasons['Apple Pay Top-Up by *1234'], 'Top-up');
   assert.equal(reasons['To pocket EUR Weekend trips'], 'Savings / pocket movement');
   assert.equal(reasons['Deposit'], 'Savings / pocket movement');
@@ -51,7 +51,7 @@ test('exclusions carry a reason', () => {
 
 test('planned rent is linked, not added', () => {
   assert.equal(first.link[0].id, 'plan-rent-1');
-  assert.match(first.link[0].fingerprint, /^revolut\|2026-10-03 13:42:06/);
+  assert.match(first.link[0].fingerprint, /^revolut\|2026-10-03 12:00:00/);
 });
 
 test('fee is included in the cost', () => {
@@ -84,7 +84,7 @@ test('refund takes the category of the original purchase and nets against it', (
 
 test('no rule match goes to the inbox (incl. transfers to other people)', () => {
   assert.equal(byDesc('Nuova Istanbul Kebab')[0].categoryId, null);
-  assert.equal(byDesc('To Samuele R')[0].categoryId, null);
+  assert.equal(byDesc('To Jordan Smith')[0].categoryId, null);
 });
 
 test('re-importing the same file adds nothing', () => {
