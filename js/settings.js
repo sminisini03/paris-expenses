@@ -12,6 +12,7 @@ export const DEFAULTS = {
   periodEnd: '2027-01-31',
   defaultCounterpart: 'partner', // who "Shared" splits with by default
   selfNames: '',              // your name(s) as shown on Revolut transfers, comma-separated
+  amountView: 'mine',         // 'mine' (my share) | 'total' (full amount paid) for budgets & charts
 };
 
 export const ACCENT_PRESETS = ['#2F5BEA', '#0E9384', '#7B61D9', '#D9467A', '#E0631A', '#18181B'];

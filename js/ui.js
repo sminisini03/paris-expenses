@@ -210,3 +210,9 @@ export function fieldError(input, message) {
   input.addEventListener('input', () => { input.removeAttribute('aria-invalid'); err.remove(); }, { once: true });
   input.focus();
 }
+
+/** Prefilled amount fields: select everything on focus so typing replaces it. */
+export function selectOnFocus(input) {
+  input.addEventListener('focus', () => requestAnimationFrame(() => input.select()));
+  return input;
+}

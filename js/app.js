@@ -6,7 +6,7 @@ import { ensureSeeded } from './seed.js';
 import { openTransactionForm } from './views/tx-form.js';
 import { listTransactions, inInbox } from './transactions.js';
 
-export const APP_VERSION = '0.5.0';
+export const APP_VERSION = '0.6.0';
 
 // Hash routes keep deep links (e.g. #/transactions?cat=x&month=2026-11)
 // working on GitHub Pages without any server configuration.

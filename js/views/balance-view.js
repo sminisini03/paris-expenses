@@ -1,6 +1,6 @@
 // Balance with a person: who owes whom, settle up, and what it's made of.
 
-import { h, icon, pageHeader, backLink, segmented, field, openDialog, confirmDialog, fieldError, toast } from '../ui.js';
+import { h, icon, pageHeader, backLink, segmented, field, openDialog, confirmDialog, fieldError, toast, selectOnFocus } from '../ui.js';
 import { listTransactions, newTransaction, saveTransaction, deleteTransaction } from '../transactions.js';
 import { listPeople, ME } from '../people.js';
 import { settings } from '../settings.js';
@@ -24,6 +24,7 @@ export function openSettleUp({ person, balance = 0, tx = null }) {
     id: 'settle-amount', class: 'amount-input__field amount', type: 'text', inputmode: 'decimal', autocomplete: 'off',
     value: tx ? centsToInput(tx.amount) : balance ? centsToInput(Math.abs(balance)) : '', placeholder: '0,00', 'aria-label': 'Amount',
   });
+  selectOnFocus(amount);
   const day = h('input', { class: 'input', type: 'date', value: tx?.date ?? todayIso() });
   const note = h('input', { class: 'input', type: 'text', value: tx?.note ?? '', placeholder: 'e.g. bank transfer, cash' });
 
@@ -46,6 +47,13 @@ export function openSettleUp({ person, balance = 0, tx = null }) {
     actions: [{ label: 'Cancel' }, { label: tx ? 'Save' : 'Record payment', variant: 'primary', onClick: async () => {
       const cents = parseAmount(amount.value);
       if (!cents || cents <= 0) { fieldError(amount, 'Enter the amount paid.'); return false; }
+      // Catch typos like "500" landing in front of a prefilled "951,98".
+      const owedInThatDirection = theyPaidMe ? balance : -balance;
+      if (!tx && cents > Math.max(owedInThatDirection, 0)) {
+        const more = money(cents - Math.max(owedInThatDirection, 0));
+        const ok = await confirmDialog('More than what is owed', `${money(cents)} is ${more} more than the current balance. Record it anyway (e.g. paying ahead)?`, 'Record anyway');
+        if (!ok) { amount.focus(); return false; }
+      }
       await saveTransaction({
         ...(tx ?? newTransaction()),
         ...settlementFields({ amount: cents, personId: person.id, theyPaidMe }),

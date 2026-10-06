@@ -1,7 +1,7 @@
 // Service worker: cache-first for the app shell so it works fully offline.
 // Bump VERSION on every deploy; the app then shows "A new version is ready".
 
-const VERSION = 'v0.5.0';
+const VERSION = 'v0.6.0';
 const CACHE = `paris-expenses-${VERSION}`;
 // On localhost, prefer the network so edits show up on reload.
 const DEV = ['localhost', '127.0.0.1'].includes(location.hostname);
@@ -24,6 +24,7 @@ const SHELL = [
   'js/export.js',
   'js/import.js',
   'js/balance.js',
+  'js/budget.js',
   'js/format.js',
   'js/settings.js',
   'js/ui.js',

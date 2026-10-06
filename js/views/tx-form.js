@@ -1,7 +1,7 @@
 // Quick add (amount → category → save) and the full transaction editor.
 // One form; quick mode folds the optional fields under "More details".
 
-import { h, field, segmented, openDialog, confirmDialog, fieldError, toast } from '../ui.js';
+import { h, field, segmented, openDialog, confirmDialog, fieldError, toast, selectOnFocus } from '../ui.js';
 import { listCategories } from '../categories.js';
 import { listPeople, ME } from '../people.js';
 import { settings } from '../settings.js';
@@ -40,6 +40,7 @@ export async function openTransactionForm({ tx = null, quick = !tx } = {}) {
     id: 'tx-amount', class: 'amount-input__field amount', type: 'text', inputmode: 'decimal', autocomplete: 'off',
     placeholder: '0,00', value: t.amount ? centsToInput(Math.abs(t.amount)) : '', 'aria-label': 'Amount', autofocus: isNew,
   });
+  selectOnFocus(amount);
   const currencySymbol = new Intl.NumberFormat(s.numberLocale, { style: 'currency', currency: s.currency })
     .formatToParts(0).find((p) => p.type === 'currency')?.value ?? '€';
 
