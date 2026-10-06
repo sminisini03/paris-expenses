@@ -1,7 +1,7 @@
 // Inbox: uncategorised expenses, one at a time. Tap a category → saved → next.
 
 import { h, icon, pageHeader, backLink, emptyState, segmented, field, toast } from '../ui.js';
-import { listTransactions, saveTransaction, updateMany } from '../transactions.js';
+import { listTransactions, saveTransaction, updateMany, inInbox } from '../transactions.js';
 import { listCategories } from '../categories.js';
 import { listPeople } from '../people.js';
 import { settings } from '../settings.js';
@@ -19,7 +19,7 @@ function suggestKeyword(description) {
 
 export async function render(main) {
   const [all, categories, people] = await Promise.all([listTransactions(), listCategories(), listPeople()]);
-  const inbox = all.filter((t) => !t.categoryId).reverse();       // oldest first
+  const inbox = all.filter(inInbox).reverse();       // oldest first
   const queue = inbox.filter((t) => !skipped.has(t.id));
   const s = settings();
   const partner = people.find((p) => p.id === s.defaultCounterpart)?.name ?? 'partner';
@@ -52,7 +52,7 @@ export async function render(main) {
     let extra = 0;
     if (ruleOn.checked && normalize(keyword.value)) {
       const rule = await upsertRuleForKeyword(keyword.value.toUpperCase(), categoryId, mode === 'mine' ? null : mode);
-      const more = (await listTransactions()).filter((x) => !x.categoryId && x.id !== t.id && matchRule(x.description, [rule]));
+      const more = (await listTransactions()).filter((x) => inInbox(x) && x.id !== t.id && matchRule(x.description, [rule]));
       if (more.length) await updateMany(more, { categoryId });
       extra = more.length;
     }

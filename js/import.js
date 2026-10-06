@@ -123,7 +123,7 @@ export function planImport(text, existing, rules, opts) {
   const rows = readRevolut(text);
   const known = new Set(existing.map((t) => t.fingerprint).filter(Boolean));
   const seen = new Map();
-  const unlinkedPlans = existing.filter((t) => (t.source === 'plan' || t.source === 'manual') && !t.fingerprint && t.amount > 0);
+  const unlinkedPlans = existing.filter((t) => (t.source === 'plan' || t.source === 'manual') && t.kind !== 'settlement' && !t.fingerprint && t.amount > 0);
   const add = [], link = [], excluded = [];
   let duplicates = 0;
 

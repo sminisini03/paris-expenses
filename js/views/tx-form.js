@@ -7,7 +7,7 @@ import { listPeople, ME } from '../people.js';
 import { settings } from '../settings.js';
 import { parseAmount, centsToInput, money } from '../format.js';
 import { computeSplit, SPLIT_MODES } from '../split.js';
-import { newTransaction, saveTransaction, deleteTransaction, listTransactions, updateMany } from '../transactions.js';
+import { newTransaction, saveTransaction, deleteTransaction, listTransactions, updateMany, inInbox } from '../transactions.js';
 import { upsertRuleForKeyword, matchRule, normalize } from '../rules.js';
 
 function categoryGrid(categories, selectedId, onChange) {
@@ -158,7 +158,7 @@ export async function openTransactionForm({ tx = null, quick = !tx } = {}) {
     if (!ruleBox.hidden && ruleOn.checked && normalize(ruleKeyword.value)) {
       const rule = await upsertRuleForKeyword(ruleKeyword.value.toUpperCase(), categoryId);
       // Apply the new rule to everything still waiting in the inbox.
-      const inbox = (await listTransactions()).filter((x) => !x.categoryId && matchRule(x.description, [rule]));
+      const inbox = (await listTransactions()).filter((x) => inInbox(x) && matchRule(x.description, [rule]));
       if (inbox.length) await updateMany(inbox, { categoryId });
       toast(`Rule saved${inbox.length ? ` · ${inbox.length} more from the inbox categorised` : ''}.`);
     } else {

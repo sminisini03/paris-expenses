@@ -2,7 +2,7 @@
 // here), day-grouped list, tap to edit, select to recategorise in bulk.
 
 import { h, icon, pageHeader, emptyState, openDialog, toast } from '../ui.js';
-import { listTransactions, filterTransactions, updateMany, isScheduled, INBOX } from '../transactions.js';
+import { listTransactions, filterTransactions, updateMany, isScheduled, INBOX, inInbox } from '../transactions.js';
 import { listCategories } from '../categories.js';
 import { listPeople, ME } from '../people.js';
 import { settings } from '../settings.js';
@@ -10,6 +10,8 @@ import { money, month as monthName, monthsBetween, dayHeading, todayIso } from '
 import { sharePct } from '../split.js';
 import { openTransactionForm } from './tx-form.js';
 import { pickAndImport } from './import-flow.js';
+import { openSettleUp } from './balance-view.js';
+import { isSettlement } from '../balance.js';
 
 function splitText(t, names) {
   const who = names[t.counterpartId] ?? 'someone';
@@ -88,7 +90,21 @@ export async function render(main, params = {}) {
   }
 
   // --- Rows ----------------------------------------------------------------
+  function settlementRow(t) {
+    const who = names[t.counterpartId] ?? 'someone';
+    const person = people.find((p) => p.id === t.counterpartId) ?? { id: t.counterpartId, name: who };
+    return h('li', {}, h('button', { class: 'row row__btn tx-row', type: 'button', 'data-key': `tx-${t.id}`, onclick: () => openSettleUp({ person, tx: t }) },
+      h('span', { class: 'cat-icon', 'aria-hidden': 'true' }, '⇄'),
+      h('span', { class: 'row__main' },
+        h('span', { class: 'row__title', style: { display: 'block' } }, t.iPaid < 0 ? `${who} paid you` : `You paid ${who}`),
+        h('span', { class: 'row__hint', style: { display: 'block' } }, 'Settle up · not spending'),
+      ),
+      h('span', { class: 'row__amount amount muted' }, money(t.amount)),
+    ));
+  }
+
   function row(t) {
+    if (isSettlement(t) && !selecting) return settlementRow(t);
     const c = catById[t.categoryId];
     const split = splitText(t, names);
     const badges = [
@@ -129,7 +145,7 @@ export async function render(main, params = {}) {
     const mine = shown.reduce((sum, t) => sum + t.myShare, 0);
     summary.textContent = `${shown.length} transaction${shown.length === 1 ? '' : 's'} · ${money(mine)} my share`;
 
-    const inboxCount = all.filter((t) => !t.categoryId).length;
+    const inboxCount = all.filter(inInbox).length;
     inboxChip.hidden = !inboxCount || f.cat === INBOX;
     inboxChip.replaceChildren(icon('inbox'), `${inboxCount} to categorise`);
 

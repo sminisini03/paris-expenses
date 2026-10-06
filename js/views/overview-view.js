@@ -1,10 +1,13 @@
 import { h, pageHeader, emptyState } from '../ui.js';
 import { settings } from '../settings.js';
-import { date, money } from '../format.js';
+import { date, money, todayIso } from '../format.js';
+import { listTransactions } from '../transactions.js';
+import { listPeople, ME } from '../people.js';
+import { allBalances } from '../balance.js';
+import { balanceText } from './balance-view.js';
 
 const DAY = 86_400_000;
 const dayNumber = (iso) => Math.floor(Date.parse(iso + 'T00:00:00Z') / DAY);
-const todayIso = () => new Date().toLocaleDateString('sv-SE'); // local YYYY-MM-DD
 
 function periodStatus({ periodStart, periodEnd }) {
   const total = dayNumber(periodEnd) - dayNumber(periodStart) + 1;
@@ -17,8 +20,11 @@ function periodStatus({ periodStart, periodEnd }) {
   return `Day ${today - dayNumber(periodStart) + 1} of ${total}`;
 }
 
-export function render(main) {
+export async function render(main) {
   const s = settings();
+  const [txs, people] = await Promise.all([listTransactions(), listPeople()]);
+  const balances = allBalances(txs);
+  const others = people.filter((p) => p.id !== ME && balances[p.id]);
   main.append(
     pageHeader('Overview', `${date(s.periodStart)} – ${date(s.periodEnd)} · ${periodStatus(s)}`),
     h('div', { class: 'grid-2' },
@@ -34,8 +40,15 @@ export function render(main) {
         h('p', { class: 'small muted' }, 'Projection appears once there is spending to average.'),
       ),
     ),
-    h('div', { class: 'card', style: { marginTop: 'var(--s-2)' } },
-      emptyState('inbox', 'No expenses yet', 'Quick add and Revolut import arrive in the next steps.'),
-    ),
+    ...others.map((p) => {
+      const b = balances[p.id];
+      return h('a', { class: 'card stack card--link', href: `#/balance?person=${p.id}`, style: { marginTop: 'var(--s-2)' }, 'data-key': `ov-bal-${p.id}` },
+        h('span', { class: 'label' }, balanceText(b.now, p.name)),
+        h('span', { class: 'big-number' }, money(Math.abs(b.now))),
+        h('span', { class: 'small muted' }, b.upcoming ? `+ ${money(Math.abs(b.upcoming))} scheduled · ` : '', 'Settle up →'),
+      );
+    }),
+    ...(txs.length ? [] : [h('div', { class: 'card', style: { marginTop: 'var(--s-2)' } },
+      emptyState('inbox', 'No expenses yet', 'Tap + to add one, or import a Revolut CSV from Transactions.'))]),
   );
 }

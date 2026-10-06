@@ -4,9 +4,9 @@ import { h, icon, toast } from './ui.js';
 import { loadSettings } from './settings.js';
 import { ensureSeeded } from './seed.js';
 import { openTransactionForm } from './views/tx-form.js';
-import { listTransactions } from './transactions.js';
+import { listTransactions, inInbox } from './transactions.js';
 
-export const APP_VERSION = '0.4.0';
+export const APP_VERSION = '0.5.0';
 
 // Hash routes keep deep links (e.g. #/transactions?cat=x&month=2026-11)
 // working on GitHub Pages without any server configuration.
@@ -16,6 +16,7 @@ const ROUTES = {
   charts:       { title: 'Charts',       icon: 'charts',       load: () => import('./views/charts-view.js') },
   settings:     { title: 'Settings',     icon: 'settings',     load: () => import('./views/settings-view.js') },
   inbox:        { title: 'Inbox', nav: false, parent: 'transactions', load: () => import('./views/inbox-view.js') },
+  balance:      { title: 'Balance', nav: false, parent: 'overview', load: () => import('./views/balance-view.js') },
 };
 const DEFAULT_ROUTE = 'overview';
 
@@ -93,7 +94,7 @@ async function render({ focus = true } = {}) {
 }
 
 async function updateBadges() {
-  const inbox = (await listTransactions()).filter((t) => !t.categoryId).length;
+  const inbox = (await listTransactions()).filter(inInbox).length;
   const badge = document.querySelector('[data-badge="transactions"]');
   if (badge) {
     badge.textContent = inbox ? String(inbox) : '';

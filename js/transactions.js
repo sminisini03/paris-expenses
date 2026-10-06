@@ -7,6 +7,9 @@ import { todayIso } from './format.js';
 
 export const INBOX = 'inbox';   // filter value for "no category"
 
+/** Waiting for a category. Settlements never need one. */
+export const inInbox = (t) => !t.categoryId && t.kind !== 'settlement';
+
 export function newTransaction(fields = {}) {
   const now = new Date().toISOString();
   return {
@@ -70,7 +73,7 @@ export function filterTransactions(txs, f = {}, categoriesById = {}) {
   const q = normalize(f.q);
   return txs.filter((t) => {
     if (f.month && !t.date.startsWith(f.month)) return false;
-    if (f.cat === INBOX ? t.categoryId : f.cat && t.categoryId !== f.cat) return false;
+    if (f.cat === INBOX ? !inInbox(t) : f.cat && t.categoryId !== f.cat) return false;
     if (f.split && t.splitMode !== f.split) return false;
     if (f.person && t.counterpartId !== f.person) return false;
     if (q) {
